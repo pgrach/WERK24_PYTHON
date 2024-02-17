@@ -1,26 +1,44 @@
 import asyncio
 import certifi
 import os
-
-os.environ['SSL_CERT_FILE'] = certifi.where()
-
+import tkinter as tk
+from tkinter import filedialog
 from werk24 import Hook, W24TechreadClient, W24AskVariantMeasures
+
+# Set the SSL certificate
+os.environ['SSL_CERT_FILE'] = certifi.where()
 
 def get_drawing_bytes(file_path):
     with open(file_path, 'rb') as file:
         return file.read()
 
 async def print_measures_of_drawing(drawing_bytes):
-    # Define the hooks with the type of information you want to ask
     hooks = [Hook(ask=W24AskVariantMeasures(), function=print)]
-
-    # Create a Werk24 Techread Client session
     async with W24TechreadClient.make_from_env() as session:
-        # Read the drawing with the specified hooks
         await session.read_drawing_with_hooks(drawing_bytes, hooks)
 
-# Load your drawing file as bytes
-drawing_bytes = get_drawing_bytes('C:\\Users\\gpu20\\OneDrive\\Desktop\\JustIT\\Github\\werk24_python\\drawings\\DRAWING_SUCCESS.png')
+def select_file():
+    file_path = filedialog.askopenfilename()
+    file_path_label.config(text=file_path)
 
-# Run the asynchronous function to process the drawing
-asyncio.get_event_loop().run_until_complete(print_measures_of_drawing(drawing_bytes))
+def process_file():
+    drawing_file = file_path_label.cget("text")
+    drawing_bytes = get_drawing_bytes(drawing_file)
+    asyncio.run(print_measures_of_drawing(drawing_bytes))
+
+# Create the main window
+root = tk.Tk()
+root.title("Werk24 Drawing Reader")
+
+# Add a label and button to select a file
+file_path_label = tk.Label(root, text="No file selected")
+file_path_label.pack()
+select_button = tk.Button(root, text="Select Drawing", command=select_file)
+select_button.pack()
+
+# Add a button to process the file
+submit_button = tk.Button(root, text="Process Drawing", command=process_file)
+submit_button.pack()
+
+# Run the application
+root.mainloop()
